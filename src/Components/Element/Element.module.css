@@ -1,0 +1,49 @@
+.game-item {
+    width: 32px;
+    height: 32px;
+}
+
+.game-item.yellow {
+    background: yellow;
+}
+
+.game-item.green {
+    background: green;
+}
+
+.game-item.image {
+    background-repeat: no-repeat;
+      padding-right: 0;
+      background-position: center ;
+      background-size: 32px 32px;  
+          
+}
+
+.game-item.mushroom {
+    background-image: url('mushroom.svg');
+}
+
+.game-item.missle {
+    background-image: url('missle.svg');
+}
+
+.game-item.player {
+    background-image: url('player.svg');
+}
+
+.game-item.bugleft {
+    background-image: url('bug-left.svg');
+}
+
+.game-item.bugright {
+    background-image: url('bug-right.svg');
+}
+
+
+.game-item.stage1 {
+    background-size: 16px 16px;
+}
+
+.game-item.stage2 {
+    background-size: 8px 8px;
+}
