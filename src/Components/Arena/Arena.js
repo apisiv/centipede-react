@@ -3,7 +3,7 @@ import Element from "../Element/Element";
 import classes from "./Arena.module.css";
 
 const Arena = (props) => {
-  console.log(props);
+
   
 
 let items = props.arena.map((x) => {
@@ -15,11 +15,11 @@ let items = props.arena.map((x) => {
   });
 
   return (
-    <div>
+    <>
       {
           items
       }
-    </div>
+    </>
   );
 };
 
