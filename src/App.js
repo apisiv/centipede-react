@@ -3,12 +3,14 @@ import Arena from "./Components/Arena/Arena";
 import Scores from "./Components/Scores/Scores";
 import React, { useEffect, useReducer } from "react";
 
+const empty = "empty";
+
 const prepareItems = (x, y) => {
   const rnd = Math.random();
   if (rnd < 0.03) {
     return "mushroom";
   }
-  return undefined;
+  return empty;
 };
 
 const initBug = () => {
@@ -26,7 +28,6 @@ const initBug = () => {
 
 const initBugs = (x, y) => {
   let bugs = [];
-
   for (let x = 0; x < 5; x++) {
     bugs.push(initBug());
   }
@@ -60,25 +61,52 @@ const prepareInitialState = () => {
     player_y: ySize - 1,
     score: 0,
     bugs: initBugs(),
+    missles: []
   };
   return placeBugs(state);
 };
 
+const isMovePossible = (item) => {
+  if (item === "empty" || item === "player") {
+    return true;
+  }
+  return false;
+};
+
 const movePlayer = (direction, state) => {
   let position = state.player_x;
-  if(direction === 'right'){
+  if (direction === "right") {
     position = state.player_x + 1 < xSize ? state.player_x + 1 : state.player_x;
-  }
-  else if(direction === 'left') {
+  } else if (direction === "left") {
     position = state.player_x - 1 >= 0 ? state.player_x - 1 : state.player_x;
   }
- 
-  if(position != state.player_x){
-    state.game_arena[state.player_x].items[state.player_y].content = undefined;
-    state.game_arena[position].items[state.player_y].content = "player";
+
+  if (position !== state.player_x) {
+    if (
+      isMovePossible(state.game_arena[position].items[state.player_y].content)
+    ) {
+      state.game_arena[state.player_x].items[state.player_y].content = empty;
+      state.game_arena[position].items[state.player_y].content = "player";
+    } else {
+      console.log(
+        "collision " + state.game_arena[position].items[state.player_y].content
+      );
+    }
   }
-  
+
   return position;
+};
+
+const moveMissle = (missle) => {
+  let posx = missle.x;
+  let posy = missle.y;
+  if(posy > 0){
+    posy = posy-1;
+    return {x : posx, y : posy}
+  } 
+  else {
+    return undefined;
+  }
 }
 
 const moveBug = (bug) => {
@@ -97,6 +125,20 @@ const moveBug = (bug) => {
   }
   return { x: posx, y: posy, direction: bug.direction };
 };
+
+const moveMissles = (state) => {
+  removeMissles(state);
+  let newPositions = [];
+  for (let missle of state.missles) {
+    const obj = moveMissle(missle);
+    if(obj !== undefined){
+      newPositions.push(obj);
+    }    
+  }
+  state.missles = newPositions;
+  placeMissles(state)
+  return newPositions;
+}
 
 const moveBugs = (state) => {
   removeBugs(state);
@@ -117,21 +159,17 @@ const placeBugs = (state) => {
   return state;
 };
 
-const showArena = (state) => {
-  for (let line of state.game_arena.items) {
-    for (let x of line) {
-      if (x.content !== undefined) {
-        console.log(x.content);
-      }
-    }
+const placeMissles = (state) => {
+  for (let missle of state.missles) {
+    state.game_arena[missle.x].items[missle.y].content = "missle";
   }
-  console.log("end");
-};
+  return state;
+}
 
 const removeBugs = (state) => {
   for (let bug of state.bugs) {
-    let item = undefined;
-    if (Math.random() < 0.1) {
+    let item = empty;
+    if (Math.random() < 0.4) {
       item = "mushroom";
     }
     state.game_arena[bug.x].items[bug.y].content = item;
@@ -139,19 +177,42 @@ const removeBugs = (state) => {
   return state;
 };
 
+const removeMissles = (state) => {
+  for (let missle of state.missles) {
+    console.log(missle.x + '  ' + missle.y);
+    state.game_arena[missle.x].items[missle.y].content = empty;
+  }
+  return state;
+};
+
+const addMissle = (state) => {
+  state.missles.push({x: state.player_x,y:  18});
+  return state.missles;
+}
+
+const missles_amount = 10;
 const processGameState = (state, action) => {
   if (action.TYPE === "tick") {
     return {
       ...state,
       score: state.score + 1,
       bugs: moveBugs(state),
+      missles: moveMissles(state),
     };
   } else if (action.TYPE === "usermove") {
+    return {
+      ...state,
+      player_x: movePlayer(action.direction, state),
+    };
+  }
+  else if (action.TYPE === 'fire'){
+    if(state.missles.length < missles_amount){
       return {
         ...state,
-        player_x : movePlayer(action.direction, state)
+        missles: addMissle(state)
       }
-    }  
+    }
+  }
   return state;
 };
 
@@ -174,6 +235,9 @@ function App() {
         gameStateDispatch({ TYPE: "usermove", direction: "right" });
       } else if (event.code === "ArrowLeft") {
         gameStateDispatch({ TYPE: "usermove", direction: "left" });
+      }
+      else if( event.code === "Space") {
+        gameStateDispatch({ TYPE: "fire"});
       }
     };
     return () => clearInterval(interval);

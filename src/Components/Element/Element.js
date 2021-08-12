@@ -5,7 +5,7 @@ const Element = (props) => {
     console.log("Element!");
 
     //const content = `${classes['game-item']} ${classes[props.background]} ${classes['image']} ${classes['bug']} `
-    const content = `${classes['game-item']} ${classes[props.background]} ${classes['image']} ${props.content !== 'undefined' && classes[props.content]} `;
+    const content = `${classes['game-item']} ${classes[props.background]} ${classes['image']} ${props.content !== 'empty' && classes[props.content]} `;
     
 
 
