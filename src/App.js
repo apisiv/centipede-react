@@ -20,6 +20,7 @@ const initBug = () => {
   } else {
     x = 0;
   }
+
   return { x: x, y: y, direction: direction };
 };
 
@@ -35,12 +36,12 @@ const initBugs = (x, y) => {
 const prepareArena = (cx, cy) => {
   let arena = [];
   for (let y = 0; y < cy; y++) {
-    let yLine = [];
+    let yLine = { id: y, items: [] };
     for (let x = 0; x < cx; x++) {
-      yLine.push({
+      yLine.items.push({
         background: Math.random() < 0.5 ? "green" : "yellow",
         content: prepareItems(),
-        id: y * 1000 + x,
+        id: y * 1000 + x * 3,
       });
     }
     arena.push(yLine);
@@ -48,7 +49,6 @@ const prepareArena = (cx, cy) => {
   return arena;
 };
 
-let semaphore = 0;
 const xSize = 20;
 const ySize = 20;
 const prepareInitialState = () => {
@@ -56,63 +56,69 @@ const prepareInitialState = () => {
     player_is_alive: true,
     game_is_started: false,
     game_arena: prepareArena(xSize, ySize),
-    player_x: 0,
-    player_y: 0,
+    player_x: xSize / 2,
+    player_y: ySize - 1,
     score: 0,
     bugs: initBugs(),
   };
   return placeBugs(state);
 };
 
+const movePlayer = (direction, state) => {
+  let position = state.player_x;
+  if(direction === 'right'){
+    position = state.player_x + 1 < xSize ? state.player_x + 1 : state.player_x;
+  }
+  else if(direction === 'left') {
+    position = state.player_x - 1 >= 0 ? state.player_x - 1 : state.player_x;
+  }
+ 
+  if(position != state.player_x){
+    state.game_arena[state.player_x].items[state.player_y].content = undefined;
+    state.game_arena[position].items[state.player_y].content = "player";
+  }
+  
+  return position;
+}
+
 const moveBug = (bug) => {
-  //let bug = Object.assign({}, pbug);
+  let posx = bug.x;
+  let posy = bug.y;
   if (bug.direction === "bugleft") {
-    bug.x = bug.x - 1;
-    if (bug.x < 0) {
+    posx = posx - 1;
+    if (posx < 0) {
       return initBug();
     }
   } else {
-    bug.x = bug.x + 1;
-    if (bug.x > xSize - 1) {
+    posx = posx + 1;
+    if (posx > xSize - 1) {
       return initBug();
     }
   }
-  return bug;
+  return { x: posx, y: posy, direction: bug.direction };
 };
 
 const moveBugs = (state) => {
-  showBugs(state.bugs);
-  state = removeBugs(state);
+  removeBugs(state);
 
-  showBugs(state.bugs);
-  state.bugs.map((x) => {
-    moveBug(x);
-  });
-  showBugs(state.bugs);
-  state = placeBugs(state);
-  showBugs(state.bugs);
-  return state;
+  let newPositions = [];
+  for (let bug of state.bugs) {
+    newPositions.push(moveBug(bug));
+  }
+  state.bugs = newPositions;
+  placeBugs(state);
+  return state.bugs;
 };
 
 const placeBugs = (state) => {
   for (let bug of state.bugs) {
-    state.game_arena[bug.x][bug.y].content = bug.direction;
+    state.game_arena[bug.x].items[bug.y].content = bug.direction;
   }
   return state;
 };
 
-const showBugs = (bugs) => {
-  /*
-  console.log('Show bugs start');
-  for(let bug of bugs){
-    console.log(`x: ${bug.x} y: ${bug.y}`);
-  }
-  console.log('Show bugs end');
-  */
-};
-
 const showArena = (state) => {
-  for (let line of state.game_arena) {
+  for (let line of state.game_arena.items) {
     for (let x of line) {
       if (x.content !== undefined) {
         console.log(x.content);
@@ -123,52 +129,56 @@ const showArena = (state) => {
 };
 
 const removeBugs = (state) => {
-  //showArena(state);
   for (let bug of state.bugs) {
-    console.log(`x:${bug.x} y:${bug.y} `);
-    console.log(`content:${state.game_arena[bug.y][bug.x].content}`);
     let item = undefined;
     if (Math.random() < 0.1) {
       item = "mushroom";
     }
-    state.game_arena[bug.x][bug.y].content = item;
+    state.game_arena[bug.x].items[bug.y].content = item;
   }
   return state;
 };
 
 const processGameState = (state, action) => {
   if (action.TYPE === "tick") {
-    console.log("tick!");
-    if (semaphore === 0) {
-      semaphore = 1;
-      let newState = Object.assign({}, state);
-      newState = moveBugs(newState);
-      newState.score = newState.score + 1;
-      semaphore = 0;
-      //gameStateDispatch(state);
-      return newState;
-    } else {
-      console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
-    }
-  }
+    return {
+      ...state,
+      score: state.score + 1,
+      bugs: moveBugs(state),
+    };
+  } else if (action.TYPE === "usermove") {
+      return {
+        ...state,
+        player_x : movePlayer(action.direction, state)
+      }
+    }  
   return state;
 };
 
 const speed = 100;
+
+const initialState = prepareInitialState();
+
 function App() {
-  
   const [gameState, gameStateDispatch] = useReducer(
     processGameState,
-    prepareInitialState()
+    initialState
   );
 
-  //const [gameState, setGameState] = useState(prepareInitialState());
-
-  const effect = useEffect(() => {
-    window.setInterval(() => {
+  useEffect(() => {
+    let interval = window.setInterval(() => {
       gameStateDispatch({ TYPE: "tick" });
     }, speed);
-  },[]);
+    window.onkeydown = (event) => {
+      if (event.code === "ArrowRight") {
+        gameStateDispatch({ TYPE: "usermove", direction: "right" });
+      } else if (event.code === "ArrowLeft") {
+        gameStateDispatch({ TYPE: "usermove", direction: "left" });
+      }
+    };
+    return () => clearInterval(interval);
+  }, []);
+
   const { game_arena } = gameState;
   const { score } = gameState;
   return (
