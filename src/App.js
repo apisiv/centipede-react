@@ -6,7 +6,7 @@ import React, { useEffect, useReducer } from "react";
 const empty = "empty";
 
 const mushroom_item = 'mushroom';
-const mushroom_place_ratio = 0.01;
+const mushroom_place_ratio = 0.001;
 const prepareItems = () => {
   const rnd = Math.random();
   if (rnd < mushroom_place_ratio) {
@@ -78,12 +78,112 @@ const prepareInitialState = () => {
     score: 0,
     bugs: initBugs(),
     missles: [],
+    centipede : [],
     mushrooms: mushrooms
   };
   state = placeBugs(state);
   state = placeMushrooms(state);
   return state;
 };
+
+const initCentipede = () => {
+  let centipede = [];
+  const direction = Math.random() > 0.5 ? 'right' : 'left';
+  const size = 5;// + Math.floor(Math.random() * 7);  
+  for(let cx = 0; cx < size; cx++){
+    if(direction === 'right'){
+      let segment = {
+        x: xSize - size + cx,
+        y: 0,
+        direction: -1
+      }
+      centipede.push(segment);      
+    } 
+    else {
+      let segment = {
+        x: cx,
+        y : 0,
+        direction: 1
+      }
+      centipede.push(segment);
+    }   
+  }
+  return centipede;
+}
+
+const isMushroom = (x, y, state) => {
+  let item = state.mushrooms[x][y];
+  if(item === 1) {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+const moveCentipedeItem = (item, state) => {
+  let next_x = item.x + item.direction;
+  let next_y = item.y;
+  if(next_x >=0 && next_x < xSize){
+    if(isMushroom(next_x, next_y,state)){
+      console.log("IsMushroom");
+      next_y = next_y + 1;
+      next_x = item.x;
+      if(next_y === ySize) {
+        return undefined;
+      }
+      if(isMushroom(next_x, next_y, state)){
+        item.direction = -item.direction;
+      }      
+      removeMushroom(next_x, next_y, state);
+    }
+  }
+  else {
+      next_y = next_y + 1;
+      next_x = item.x;
+      if(next_y === ySize){
+        return undefined;
+      }
+      item.direction = -item.direction;
+      removeMushroom(next_x, next_y, state);
+  }
+  return {x:next_x, y:next_y, direction:item.direction};
+}
+
+const removeCentipedeItem = (item, state) => {
+  let centipedes = state.centipede.filter(x => x!== item);
+  placeMushroom(item.x, item.y, state);
+  return centipedes;
+}
+
+const moveCentipede = (state) => {
+  let centipede = [];
+  removeCentipede(state);
+  for(let item of state.centipede){
+    let segment = moveCentipedeItem(item, state);
+    if(segment !== undefined){
+      centipede.push(segment);
+    }
+  }
+  if(centipede.length === 0){
+    centipede = initCentipede();
+  }
+  state.centipede = centipede;
+  showCentipede(state);
+  return centipede;
+}
+
+const removeCentipede = (state) => {
+  for(let item of state.centipede){
+    state.game_arena[item.x].items[item.y].content = empty;
+  }
+}
+
+const showCentipede = (state) => {
+  for(let item of state.centipede){
+    state.game_arena[item.x].items[item.y].content = item.direction === 'right' ? 'ant-right' : 'ant-left';
+  }
+}
 
 const isMovePossible = (item) => {
   if (item === "empty" || item === "player") {
@@ -173,6 +273,18 @@ const detectCollisions = (state) => {
         state.score += 1;
       }
     }
+  
+  for(let missle of state.missles) {
+    let segments = state.centipede.filter(segment => segment.x === missle.x &&
+      segment.y === missle.y);
+    if(segments.length > 0){
+      state.score += 25;
+      for(let segment of segments){
+        state.centipede = removeCentipedeItem(segment, state);
+      }
+    }
+  }  
+
 };
 
 const moveMissles = (state) => {
@@ -266,9 +378,9 @@ const missles_amount = 10;
 const processGameState = (state, action) => {
   if (action.TYPE === "tick") {
     let next_state = { ...state };
-    //next_state.score = state.score + 1;
     next_state.missles = moveMissles(state);
     next_state.bugs = moveBugs(state);
+    next_state.centipede = moveCentipede(state);
     detectCollisions(next_state);
 
     return next_state;

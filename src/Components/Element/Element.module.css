@@ -19,6 +19,14 @@
           
 }
 
+.game-item.ant-left {
+    background-image: url('ant-left.svg');
+}
+
+.game-item.ant-right {
+    background-image: url('ant-right.svg');
+}
+
 .game-item.mushroom {
     background-image: url('mushroom.svg');
 }
