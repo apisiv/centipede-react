@@ -7,6 +7,7 @@ const Scores = props => {
     return(
         <div>
             <span className={classes.scores}>{score}</span>
+            <span className={classes.logo}>Centipede</span>
         </div>
     );
 

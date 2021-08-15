@@ -5,7 +5,7 @@ import React, { useEffect, useReducer } from "react";
 
 const empty = "empty";
 
-const mushroom_item = 'mushroom';
+const mushroom_item = "mushroom";
 const mushroom_place_ratio = 0.001;
 const prepareItems = () => {
   const rnd = Math.random();
@@ -46,7 +46,7 @@ const prepareInitialMushrooms = (cx, cy) => {
     mushrooms.push(yLine);
   }
   return mushrooms;
-}
+};
 
 const prepareArena = (cx, cy, mushrooms) => {
   let arena = [];
@@ -67,19 +67,19 @@ const prepareArena = (cx, cy, mushrooms) => {
 const xSize = 20;
 const ySize = 20;
 const prepareInitialState = () => {
-  const mushrooms = prepareInitialMushrooms(xSize, ySize)
+  const mushrooms = prepareInitialMushrooms(xSize, ySize);
   const arena = prepareArena(xSize, ySize);
   let state = {
     player_is_alive: true,
-    game_is_started: false,
+    game_is_over: false,
     game_arena: arena,
     player_x: xSize / 2,
     player_y: ySize - 1,
     score: 0,
     bugs: initBugs(),
     missles: [],
-    centipede : [],
-    mushrooms: mushrooms
+    centipede: [],
+    mushrooms: mushrooms,
   };
   state = placeBugs(state);
   state = placeMushrooms(state);
@@ -88,102 +88,100 @@ const prepareInitialState = () => {
 
 const initCentipede = () => {
   let centipede = [];
-  const direction = Math.random() > 0.5 ? 'right' : 'left';
-  const size = 5;// + Math.floor(Math.random() * 7);  
-  for(let cx = 0; cx < size; cx++){
-    if(direction === 'right'){
+  const direction = Math.random() > 0.5 ? "right" : "left";
+  const size = 5; // + Math.floor(Math.random() * 7);
+  for (let cx = 0; cx < size; cx++) {
+    if (direction === "right") {
       let segment = {
         x: xSize - size + cx,
         y: 0,
-        direction: -1
-      }
-      centipede.push(segment);      
-    } 
-    else {
+        direction: -1,
+      };
+      centipede.push(segment);
+    } else {
       let segment = {
         x: cx,
-        y : 0,
-        direction: 1
-      }
+        y: 0,
+        direction: 1,
+      };
       centipede.push(segment);
-    }   
+    }
   }
   return centipede;
-}
+};
 
 const isMushroom = (x, y, state) => {
   let item = state.mushrooms[x][y];
-  if(item === 1) {
+  if (item === 1) {
     return true;
-  }
-  else {
+  } else {
     return false;
   }
-}
+};
 
 const moveCentipedeItem = (item, state) => {
   let next_x = item.x + item.direction;
   let next_y = item.y;
-  if(next_x >=0 && next_x < xSize){
-    if(isMushroom(next_x, next_y,state)){
+  if (next_x >= 0 && next_x < xSize) {
+    if (isMushroom(next_x, next_y, state)) {
       console.log("IsMushroom");
       next_y = next_y + 1;
       next_x = item.x;
-      if(next_y === ySize) {
+      if (next_y === ySize) {
         return undefined;
       }
-      if(isMushroom(next_x, next_y, state)){
+      if (isMushroom(next_x, next_y, state)) {
         item.direction = -item.direction;
-      }      
+      }
       removeMushroom(next_x, next_y, state);
     }
+  } else {
+    next_y = next_y + 1;
+    next_x = item.x;
+    if (next_y === ySize) {
+      return undefined;
+    }
+    item.direction = -item.direction;
+    removeMushroom(next_x, next_y, state);
   }
-  else {
-      next_y = next_y + 1;
-      next_x = item.x;
-      if(next_y === ySize){
-        return undefined;
-      }
-      item.direction = -item.direction;
-      removeMushroom(next_x, next_y, state);
-  }
-  return {x:next_x, y:next_y, direction:item.direction};
-}
+  return { x: next_x, y: next_y, direction: item.direction };
+};
 
 const removeCentipedeItem = (item, state) => {
-  let centipedes = state.centipede.filter(x => x!== item);
+  let centipedes = state.centipede.filter((x) => x !== item);
   placeMushroom(item.x, item.y, state);
   return centipedes;
-}
+};
 
 const moveCentipede = (state) => {
   let centipede = [];
   removeCentipede(state);
-  for(let item of state.centipede){
+  for (let item of state.centipede) {
     let segment = moveCentipedeItem(item, state);
-    if(segment !== undefined){
+    if (segment !== undefined) {
       centipede.push(segment);
     }
   }
-  if(centipede.length === 0){
+  if (centipede.length === 0) {
     centipede = initCentipede();
   }
   state.centipede = centipede;
   showCentipede(state);
   return centipede;
-}
+};
 
 const removeCentipede = (state) => {
-  for(let item of state.centipede){
+  for (let item of state.centipede) {
     state.game_arena[item.x].items[item.y].content = empty;
   }
-}
+};
 
 const showCentipede = (state) => {
-  for(let item of state.centipede){
-    state.game_arena[item.x].items[item.y].content = item.direction === 'right' ? 'ant-right' : 'ant-left';
+  for (let item of state.centipede) {
+    state.game_arena[item.x].items[item.y].content =
+      item.direction === "right" ? "ant-right" : "ant-left";
   }
-}
+};
 
 const isMovePossible = (item) => {
   if (item === "empty" || item === "player") {
@@ -192,24 +190,32 @@ const isMovePossible = (item) => {
   return false;
 };
 
-
 const movePlayer = (direction, state) => {
-  let position = state.player_x;
+  let position = { x: state.player_x, y: state.player_y };
   if (direction === "right") {
-    position = state.player_x + 1 < xSize ? state.player_x + 1 : state.player_x;
+    position.x =
+      state.player_x + 1 < xSize ? state.player_x + 1 : state.player_x;
   } else if (direction === "left") {
-    position = state.player_x - 1 >= 0 ? state.player_x - 1 : state.player_x;
+    position.x = state.player_x - 1 >= 0 ? state.player_x - 1 : state.player_x;
+  } else if (direction === "up") {
+    position.y =
+      state.player_y - 1 >= ySize - 2 ? state.player_y - 1 : state.player_y;
+  } else if (direction === "down") {
+    position.y =
+      state.player_y + 1 < xSize ? state.player_y + 1 : state.player_y;
   }
 
-  if (position !== state.player_x) {
+  console.log("---->> " + position.x + "  " + position.y);
+
+  if (position.x !== state.player_x || position.y !== state.player_y) {
     if (
-      isMovePossible(state.game_arena[position].items[state.player_y].content)
+      isMovePossible(state.game_arena[position.x].items[position.y].content)
     ) {
       state.game_arena[state.player_x].items[state.player_y].content = empty;
-      state.game_arena[position].items[state.player_y].content = "player";
+      state.game_arena[position.x].items[position.y].content = "player";
     } else {
       console.log(
-        "collision " + state.game_arena[position].items[state.player_y].content
+        "collision " + state.game_arena[position.x].items[position.y].content
       );
     }
   }
@@ -225,7 +231,7 @@ const moveMissle = (state, missle) => {
   let posy = missle.y;
   if (posy > 0) {
     posy = posy - 1;
-      return { x: posx, y: posy };    
+    return { x: posx, y: posy };
   } else {
     return undefined;
   }
@@ -253,7 +259,7 @@ const moveBug = (bug) => {
 
 const detectCollisions = (state) => {
   //1. does missle hit a bug
-  for (let missle of state.missles) { 
+  for (let missle of state.missles) {
     let bugs = state.bugs.filter(
       (bug) => bug.x === missle.x && bug.y === missle.y
     );
@@ -266,25 +272,33 @@ const detectCollisions = (state) => {
     }
   }
   //2 does missle hit a mushroom
-  for (let missle of state.missles) { 
-      if (state.mushrooms[missle.x][missle.y] === 1) {
-        missle.to_remove = true;
-        removeMushroom(missle.x, missle.y, state)
-        state.score += 1;
-      }
+  for (let missle of state.missles) {
+    if (state.mushrooms[missle.x][missle.y] === 1) {
+      missle.to_remove = true;
+      removeMushroom(missle.x, missle.y, state);
+      state.score += 1;
     }
-  
-  for(let missle of state.missles) {
-    let segments = state.centipede.filter(segment => segment.x === missle.x &&
-      segment.y === missle.y);
-    if(segments.length > 0){
+  }
+
+  for (let missle of state.missles) {
+    let segments = state.centipede.filter(
+      (segment) => segment.x === missle.x && segment.y === missle.y
+    );
+    if (segments.length > 0) {
       state.score += 25;
-      for(let segment of segments){
+      for (let segment of segments) {
         state.centipede = removeCentipedeItem(segment, state);
       }
     }
-  }  
+  }
 
+  const isUserDead =
+    state.centipede.find(
+      (x) => x.x === state.player_x && x.y === state.player_y
+    ) !== undefined;
+  if (isUserDead) {
+    state.player_is_alive = false;
+  }
 };
 
 const moveMissles = (state) => {
@@ -316,23 +330,23 @@ const moveBugs = (state) => {
 const placeMushroom = (cx, cy, state) => {
   state.game_arena[cx].items[cy].content = mushroom_item;
   state.mushrooms[cx][cy] = 1;
-}
+};
 
 const removeMushroom = (cx, cy, state) => {
   state.game_arena[cx].items[cy].content = empty;
   state.mushrooms[cx][cy] = 0;
-}
-
+};
 
 const placeMushrooms = (state) => {
   for (let x in state.mushrooms) {
-    for(let y in state.mushrooms[x]){
+    for (let y in state.mushrooms[x]) {
       const mushroom = state.mushrooms[x][y];
-      state.game_arena[x].items[y].content = mushroom === 1 ? mushroom_item: empty;
+      state.game_arena[x].items[y].content =
+        mushroom === 1 ? mushroom_item : empty;
     }
   }
   return state;
-}
+};
 
 const placeBugs = (state) => {
   for (let bug of state.bugs) {
@@ -340,8 +354,6 @@ const placeBugs = (state) => {
   }
   return state;
 };
-
-
 
 const placeMissles = (state) => {
   for (let missle of state.missles) {
@@ -351,11 +363,11 @@ const placeMissles = (state) => {
 };
 
 const removeBugs = (state) => {
-  for (let bug of state.bugs) {    
+  for (let bug of state.bugs) {
     if (Math.random() < 0.4) {
       placeMushroom(bug.x, bug.y, state);
     } else {
-    state.game_arena[bug.x].items[bug.y].content = empty;
+      state.game_arena[bug.x].items[bug.y].content = empty;
     }
   }
   return state;
@@ -370,24 +382,32 @@ const removeMissles = (state) => {
 };
 
 const addMissle = (state) => {
-  state.missles.push({ x: state.player_x, y: 18 });
+  state.missles.push({ x: state.player_x, y: ySize - 1 });
   return state.missles;
 };
 
-const missles_amount = 10;
+const missles_amount = 20;
 const processGameState = (state, action) => {
   if (action.TYPE === "tick") {
-    let next_state = { ...state };
-    next_state.missles = moveMissles(state);
-    next_state.bugs = moveBugs(state);
-    next_state.centipede = moveCentipede(state);
-    detectCollisions(next_state);
+    if (state.player_is_alive) {
+      let next_state = { ...state };
+      next_state.missles = moveMissles(state);
+      next_state.bugs = moveBugs(state);
+      next_state.centipede = moveCentipede(state);
+      detectCollisions(next_state);
 
-    return next_state;
+      return next_state;
+    }
+    else {
+      let next_state = prepareInitialState();
+      return next_state;
+    }
   } else if (action.TYPE === "usermove") {
+    var position = movePlayer(action.direction, state);
     return {
       ...state,
-      player_x: movePlayer(action.direction, state),
+      player_x: position.x,
+      player_y: position.y,
     };
   } else if (action.TYPE === "fire") {
     if (state.missles.length < missles_amount) {
@@ -419,6 +439,10 @@ function App() {
         gameStateDispatch({ TYPE: "usermove", direction: "right" });
       } else if (event.code === "ArrowLeft") {
         gameStateDispatch({ TYPE: "usermove", direction: "left" });
+      } else if (event.code === "ArrowUp") {
+        gameStateDispatch({ TYPE: "usermove", direction: "up" });
+      } else if (event.code === "ArrowDown") {
+        gameStateDispatch({ TYPE: "usermove", direction: "down" });
       } else if (event.code === "Space") {
         gameStateDispatch({ TYPE: "fire" });
       }
