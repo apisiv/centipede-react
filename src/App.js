@@ -19,13 +19,14 @@ const initBug = () => {
   const y = Math.floor(Math.random() * 18);
   let x = 0;
   const direction = Math.random() < 0.5 ? "bugleft" : "bugright";
+  const speed = Math.floor(1 + Math.random() * 3);
   if (direction === "bugleft") {
     x = xSize - 1;
   } else {
     x = 0;
   }
 
-  return { x: x, y: y, direction: direction };
+  return { x: x, y: y, direction: direction, speed: speed, tick: 1 };
 };
 
 const initBugs = (x, y) => {
@@ -83,6 +84,7 @@ const prepareInitialState = () => {
   };
   state = placeBugs(state);
   state = placeMushrooms(state);
+  state = placePlayer(state);
   return state;
 };
 
@@ -96,6 +98,8 @@ const initCentipede = () => {
         x: xSize - size + cx,
         y: 0,
         direction: -1,
+        speed: 1 + Math.floor(Math.random() * 3),
+        tick: 1,
       };
       centipede.push(segment);
     } else {
@@ -103,6 +107,8 @@ const initCentipede = () => {
         x: cx,
         y: 0,
         direction: 1,
+        speed: 1 + Math.floor(Math.random() * 3),
+        tick: 1,
       };
       centipede.push(segment);
     }
@@ -120,31 +126,41 @@ const isMushroom = (x, y, state) => {
 };
 
 const moveCentipedeItem = (item, state) => {
+  item.tick++;
+
   let next_x = item.x + item.direction;
   let next_y = item.y;
-  if (next_x >= 0 && next_x < xSize) {
-    if (isMushroom(next_x, next_y, state)) {
-      console.log("IsMushroom");
+  if (item.tick > item.speed) {
+    if (next_x >= 0 && next_x < xSize) {
+      if (isMushroom(next_x, next_y, state)) {
+        console.log("IsMushroom");
+        next_y = next_y + 1;
+        next_x = item.x;
+        if (next_y === ySize) {
+          return undefined;
+        }
+        if (isMushroom(next_x, next_y, state)) {
+          item.direction = -item.direction;
+        }
+        removeMushroom(next_x, next_y, state);
+      }
+    } else {
       next_y = next_y + 1;
       next_x = item.x;
       if (next_y === ySize) {
         return undefined;
       }
-      if (isMushroom(next_x, next_y, state)) {
-        item.direction = -item.direction;
-      }
+      item.direction = -item.direction;
       removeMushroom(next_x, next_y, state);
     }
-  } else {
-    next_y = next_y + 1;
-    next_x = item.x;
-    if (next_y === ySize) {
-      return undefined;
-    }
-    item.direction = -item.direction;
-    removeMushroom(next_x, next_y, state);
   }
-  return { x: next_x, y: next_y, direction: item.direction };
+  return {
+    x: next_x,
+    y: next_y,
+    direction: item.direction,
+    tick: item.tick,
+    speed: item.speed,
+  };
 };
 
 const removeCentipedeItem = (item, state) => {
@@ -243,18 +259,28 @@ const moveBug = (bug) => {
   }
   let posx = bug.x;
   let posy = bug.y;
-  if (bug.direction === "bugleft") {
-    posx = posx - 1;
-    if (posx < 0) {
-      return initBug();
+  bug.tick++;
+  if (bug.tick > bug.speed) {
+    if (bug.direction === "bugleft") {
+      posx = posx - 1;
+      if (posx < 0) {
+        return initBug();
+      }
+    } else {
+      posx = posx + 1;
+      if (posx > xSize - 1) {
+        return initBug();
+      }
     }
-  } else {
-    posx = posx + 1;
-    if (posx > xSize - 1) {
-      return initBug();
-    }
+    bug.tick = 1;
   }
-  return { x: posx, y: posy, direction: bug.direction };
+  return {
+    x: posx,
+    y: posy,
+    direction: bug.direction,
+    speed: bug.speed,
+    tick: bug.tick,
+  };
 };
 
 const detectCollisions = (state) => {
@@ -355,6 +381,11 @@ const placeBugs = (state) => {
   return state;
 };
 
+const placePlayer = (state) => {
+  state.game_arena[state.player_x].items[state.player_y].content = "player";
+  return state;
+}
+
 const placeMissles = (state) => {
   for (let missle of state.missles) {
     state.game_arena[missle.x].items[missle.y].content = "missle";
@@ -375,14 +406,19 @@ const removeBugs = (state) => {
 
 const removeMissles = (state) => {
   for (let missle of state.missles) {
-    console.log(missle.x + "  " + missle.y);
+    console.log("missle : " + missle.x + "  " + missle.y);
+    console.log("player : " + state.player_x + "  " + state.player_y);
+    console.log(state.player_x !== missle.x && state.player_y !== missle.y);
+    if (state.player_x === missle.x && state.player_y === missle.y) {
+      break;
+    }
     state.game_arena[missle.x].items[missle.y].content = empty;
   }
   return state;
 };
 
 const addMissle = (state) => {
-  state.missles.push({ x: state.player_x, y: ySize - 1 });
+  state.missles.push({ x: state.player_x, y: state.player_y});
   return state.missles;
 };
 
@@ -397,8 +433,7 @@ const processGameState = (state, action) => {
       detectCollisions(next_state);
 
       return next_state;
-    }
-    else {
+    } else {
       let next_state = prepareInitialState();
       return next_state;
     }
@@ -453,10 +488,10 @@ function App() {
   const { game_arena } = gameState;
   const { score } = gameState;
   return (
-    <>
+    <div className="game">
       <Scores score={score} />
       <Arena arena={game_arena} />
-    </>
+    </div>
   );
 }
 

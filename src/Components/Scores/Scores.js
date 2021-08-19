@@ -6,8 +6,8 @@ const Scores = props => {
     console.log(score);
     return(
         <div>
-            <span className={classes.scores}>{score}</span>
-            <span className={classes.logo}>Centipede</span>
+            <div className={classes.scores}>{score}</div>
+            <div className={classes.logo}>Centipede</div>
         </div>
     );
 
