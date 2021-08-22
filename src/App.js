@@ -2,7 +2,8 @@ import "./App.css";
 import Arena from "./Components/Arena/Arena";
 import Scores from "./Components/Scores/Scores";
 import React, { useEffect, useReducer } from "react";
-
+import ErrorBoundary from "./ErrorBoundary"
+ 
 const empty = "empty";
 
 const mushroom_item = "mushroom";
@@ -490,7 +491,9 @@ function App() {
   return (
     <div className="game">
       <Scores score={score} />
-      <Arena arena={game_arena} />
+      <ErrorBoundary>
+        <Arena arena={game_arena} />
+      </ErrorBoundary>
     </div>
   );
 }
