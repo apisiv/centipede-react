@@ -1,0 +1,23 @@
+{
+  "files": {
+    "main.css": "/centipede-react/static/css/main.5e7396ee.chunk.css",
+    "main.js": "/centipede-react/static/js/main.0edc80e8.chunk.js",
+    "main.js.map": "/centipede-react/static/js/main.0edc80e8.chunk.js.map",
+    "runtime-main.js": "/centipede-react/static/js/runtime-main.9c51b95e.js",
+    "runtime-main.js.map": "/centipede-react/static/js/runtime-main.9c51b95e.js.map",
+    "static/js/2.4c4bccdf.chunk.js": "/centipede-react/static/js/2.4c4bccdf.chunk.js",
+    "static/js/2.4c4bccdf.chunk.js.map": "/centipede-react/static/js/2.4c4bccdf.chunk.js.map",
+    "static/js/3.0bd533b5.chunk.js": "/centipede-react/static/js/3.0bd533b5.chunk.js",
+    "static/js/3.0bd533b5.chunk.js.map": "/centipede-react/static/js/3.0bd533b5.chunk.js.map",
+    "index.html": "/centipede-react/index.html",
+    "static/css/main.5e7396ee.chunk.css.map": "/centipede-react/static/css/main.5e7396ee.chunk.css.map",
+    "static/js/2.4c4bccdf.chunk.js.LICENSE.txt": "/centipede-react/static/js/2.4c4bccdf.chunk.js.LICENSE.txt",
+    "static/media/Element.module.css": "/centipede-react/static/media/player.652f49f5.svg"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.9c51b95e.js",
+    "static/js/2.4c4bccdf.chunk.js",
+    "static/css/main.5e7396ee.chunk.css",
+    "static/js/main.0edc80e8.chunk.js"
+  ]
+}
