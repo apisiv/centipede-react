@@ -39,8 +39,7 @@ const initCentipede = () => {
     let next_y = item.y;
     if (item.tick > item.speed) {
       if (next_x >= 0 && next_x < xSize) {
-        if (isMushroom(next_x, next_y, state)) {
-          console.log("IsMushroom");
+        if (isMushroom(next_x, next_y, state)) {        
           next_y = next_y + 1;
           next_x = item.x;
           if (next_y === ySize) {

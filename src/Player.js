@@ -23,8 +23,6 @@ const isMovePossible = (item) => {
         state.player_y + 1 < xSize ? state.player_y + 1 : state.player_y;
     }
   
-    console.log("---->> " + position.x + "  " + position.y);
-  
     if (position.x !== state.player_x || position.y !== state.player_y) {
       if (
         isMovePossible(state.game_arena[position.x].items[position.y].content)

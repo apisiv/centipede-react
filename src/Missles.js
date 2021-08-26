@@ -38,9 +38,6 @@ export const moveMissles = (state) => {
 
 export const removeMissles = (state) => {
   for (let missle of state.missles) {
-    console.log("missle : " + missle.x + "  " + missle.y);
-    console.log("player : " + state.player_x + "  " + state.player_y);
-    console.log(state.player_x !== missle.x && state.player_y !== missle.y);
     if (state.player_x === missle.x && state.player_y === missle.y) {
       break;
     }
